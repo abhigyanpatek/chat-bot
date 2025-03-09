@@ -28,9 +28,6 @@ exports.handler = async function(event, context) {
 
     // Create a chat session
     const chat = model.startChat({
-      generationConfig: {
-        maxOutputTokens: 100,
-      },
       history: [
         {
           role: "user",
