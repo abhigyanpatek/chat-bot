@@ -24,7 +24,7 @@ exports.handler = async function(event, context) {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
     // For text-only input, use the gemini-pro model
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-thinking-exp-01-21" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
 
     // Create a chat session
     const chat = model.startChat({
