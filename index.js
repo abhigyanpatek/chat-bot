@@ -2,6 +2,35 @@ document.addEventListener('DOMContentLoaded', function() {
   const messageForm = document.getElementById('message-form');
   const userInput = document.getElementById('user-input');
   const chatMessages = document.getElementById('chat-messages');
+  
+  // Initialize conversation history
+  let conversationHistory = [];
+  
+  // Load existing messages from history if available
+  const renderSavedMessages = () => {
+    // Skip the first two messages (system prompt)
+    for (let i = 2; i < conversationHistory.length; i++) {
+      const item = conversationHistory[i];
+      if (item.role === 'user') {
+        addMessage(item.parts[0].text, 'user', false);
+      } else if (item.role === 'model') {
+        addMessage(item.parts[0].text, 'bot', false);
+      }
+    }
+  };
+  
+  // Try to load history from localStorage
+  try {
+    const savedHistory = localStorage.getItem('chatHistory');
+    if (savedHistory) {
+      conversationHistory = JSON.parse(savedHistory);
+      renderSavedMessages();
+    }
+  } catch (error) {
+    console.error('Error loading chat history:', error);
+    // Reset history if there was an error
+    conversationHistory = [];
+  }
 
   // Handle form submission
   messageForm.addEventListener('submit', async function(event) {
@@ -23,13 +52,16 @@ document.addEventListener('DOMContentLoaded', function() {
       chatMessages.scrollTop = chatMessages.scrollHeight;
       
       try {
-        // Call the Netlify serverless function
+        // Call the Netlify serverless function with history
         const response = await fetch('/.netlify/functions/chat', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ message })
+          body: JSON.stringify({ 
+            message,
+            history: conversationHistory 
+          })
         });
         
         const data = await response.json();
@@ -40,6 +72,12 @@ document.addEventListener('DOMContentLoaded', function() {
         if (response.ok) {
           // Add bot response to chat
           addMessage(data.response, 'bot');
+          
+          // Update conversation history
+          conversationHistory = data.history;
+          
+          // Save to localStorage
+          localStorage.setItem('chatHistory', JSON.stringify(conversationHistory));
         } else {
           throw new Error(data.error || 'Failed to get response');
         }
@@ -55,7 +93,7 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   // Add message to chat
-  function addMessage(text, sender) {
+  function addMessage(text, sender, shouldScroll = true) {
     const messageDiv = document.createElement('div');
     messageDiv.classList.add('message');
     messageDiv.classList.add(sender + '-message');
@@ -67,7 +105,37 @@ document.addEventListener('DOMContentLoaded', function() {
     messageDiv.appendChild(messageContent);
     chatMessages.appendChild(messageDiv);
     
-    // Scroll to bottom
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+    // Scroll to bottom if needed
+    if (shouldScroll) {
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
   }
+  
+  // Add a button to clear history
+  const addClearButton = () => {
+    const buttonContainer = document.createElement('div');
+    buttonContainer.style.textAlign = 'center';
+    buttonContainer.style.margin = '10px 0';
+    
+    const clearButton = document.createElement('button');
+    clearButton.textContent = 'Clear Conversation';
+    clearButton.style.padding = '8px 16px';
+    clearButton.style.backgroundColor = '#f44336';
+    clearButton.style.color = 'white';
+    clearButton.style.border = 'none';
+    clearButton.style.borderRadius = '4px';
+    clearButton.style.cursor = 'pointer';
+    
+    clearButton.addEventListener('click', () => {
+      conversationHistory = [];
+      localStorage.removeItem('chatHistory');
+      chatMessages.innerHTML = '';
+      alert('Conversation history cleared!');
+    });
+    
+    buttonContainer.appendChild(clearButton);
+    document.querySelector('form').insertAdjacentElement('afterend', buttonContainer);
+  };
+  
+  addClearButton();
 });
