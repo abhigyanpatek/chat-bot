@@ -2,7 +2,6 @@ require('dotenv').config();
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 exports.handler = async function(event, context) {
-  // Check for POST method
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
@@ -20,13 +19,9 @@ exports.handler = async function(event, context) {
       };
     }
 
-    // Initialize Gemini API with API key from environment variable
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
-    // For text-only input, use the gemini-pro model
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
 
-    // Create initial system message if history is empty
     const chatHistory = history.length === 0 ? [
       {
         role: "user",
@@ -38,16 +33,13 @@ exports.handler = async function(event, context) {
       }
     ] : history;
 
-    // Create a chat session with the provided history
     const chat = model.startChat({
       history: chatHistory,
     });
 
-    // Send the user's message and get a response
     const result = await chat.sendMessage(message);
     const botResponse = result.response.text();
 
-    // Add the new message and response to history
     const updatedHistory = [
       ...chatHistory,
       { role: "user", parts: [{ text: message }] },
