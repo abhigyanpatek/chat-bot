@@ -5,7 +5,8 @@ function App() {
     const [messages, setMessages] = useState([{ text: 'Hi there! How can I help you today with food-related questions?', sender: 'bot' }]);
     const [inputText, setInputText] = useState('');
     const [conversationHistory, setConversationHistory] = useState([]);
-    const [isLoading, setIsLoading] = useState(false);
+    const [isStreaming, setIsStreaming] = useState(false);
+    const [streamingText, setStreamingText] = useState('');
     const chatMessagesRef = useRef(null);
 
     // Load conversation history from localStorage on initial render
@@ -31,31 +32,26 @@ function App() {
         }
     }, []);
 
-    // Auto-scroll to bottom when messages change
+    // Auto-scroll to bottom when messages change or during streaming
     useEffect(() => {
         if (chatMessagesRef.current) {
             chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight;
         }
-    }, [messages]);
+    }, [messages, streamingText]);
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        if (!inputText.trim()) return;
-
-        const userMessage = { text: inputText, sender: 'user' };
-        setMessages([...messages, userMessage]);
-        setInputText('');
-        setIsLoading(true);
-
+    // Function to handle streaming chat with OpenAI compatibility
+    const handleChat = async (userInput) => {
         try {
-            // Call to Netlify function
-            const response = await fetch('/.netlify/functions/chat', {
+            setIsStreaming(true);
+            setStreamingText('');
+
+            const response = await fetch('/.netlify/functions/openai-stream', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    message: inputText,
+                    message: userInput,
                     history: conversationHistory
                 }),
             });
@@ -66,6 +62,16 @@ function App() {
 
             const data = await response.json();
 
+            // Simulate streaming by displaying chunks one by one
+            let displayedText = '';
+            for (const chunk of data.chunks) {
+                displayedText += chunk;
+                setStreamingText(displayedText);
+                // Add a small delay to simulate streaming
+                await new Promise(resolve => setTimeout(resolve, 30));
+            }
+
+            // After streaming completes, add the message to the list
             const botMessage = { text: data.response, sender: 'bot' };
             setMessages(prev => [...prev, botMessage]);
 
@@ -74,19 +80,38 @@ function App() {
 
             // Save to localStorage
             localStorage.setItem('chatHistory', JSON.stringify(data.history));
+
+            // Clear streaming text and state
+            setStreamingText('');
+            setIsStreaming(false);
         } catch (error) {
-            console.error('Error sending message:', error);
+            console.error('Error in chat:', error);
             const errorMessage = { text: 'Sorry, there was an error processing your request.', sender: 'bot' };
             setMessages(prev => [...prev, errorMessage]);
-        } finally {
-            setIsLoading(false);
+            setIsStreaming(false);
+            setStreamingText('');
         }
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!inputText.trim()) return;
+
+        const userMessage = { text: inputText, sender: 'user' };
+        setMessages([...messages, userMessage]);
+        const userInput = inputText;
+        setInputText('');
+
+        // Call the chat function
+        await handleChat(userInput);
     };
 
     const clearChat = () => {
         setMessages([{ text: 'Hi there! How can I help you today with food-related questions?', sender: 'bot' }]);
         setConversationHistory([]);
         localStorage.removeItem('chatHistory');
+        setStreamingText('');
+        setIsStreaming(false);
     };
 
     return (
@@ -101,9 +126,9 @@ function App() {
                         <div className="message-content">{message.text}</div>
                     </div>
                 ))}
-                {isLoading && (
+                {isStreaming && (
                     <div className="message bot-message">
-                        <div className="message-content thinking">Thinking...</div>
+                        <div className="message-content streaming">{streamingText || 'Thinking...'}</div>
                     </div>
                 )}
             </div>
@@ -115,9 +140,9 @@ function App() {
                         onChange={(e) => setInputText(e.target.value)}
                         placeholder="Ask me about food..."
                         autoComplete="off"
-                        disabled={isLoading}
+                        disabled={isStreaming}
                     />
-                    <button type="submit" disabled={isLoading}>Send</button>
+                    <button type="submit" disabled={isStreaming}>Send</button>
                 </form>
             </div>
         </div>

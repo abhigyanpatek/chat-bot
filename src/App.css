@@ -68,6 +68,26 @@
   animation: pulse 1.5s infinite;
 }
 
+.streaming {
+  position: relative;
+}
+
+.streaming::after {
+  content: '';
+  display: inline-block;
+  width: 4px;
+  height: 14px;
+  background-color: #4285f4;
+  margin-left: 4px;
+  animation: blink 0.8s infinite;
+  vertical-align: middle;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
+}
+
 .chat-input {
   padding: 15px;
   border-top: 1px solid #ddd;
