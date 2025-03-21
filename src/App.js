@@ -8,6 +8,7 @@ function App() {
     const [isLoading, setIsLoading] = useState(false);
     const [showChat, setShowChat] = useState(false);
     const [suggestedQueries, setSuggestedQueries] = useState([]);
+    const [isExpanded, setIsExpanded] = useState(false);
     const messagesEndRef = useRef(null);
 
     // Load conversation history from localStorage on initial render
@@ -40,6 +41,11 @@ function App() {
             generateContextAwareSuggestions();
         }
     }, []);
+
+    // Toggle between expanded and normal view
+    const toggleExpand = () => {
+        setIsExpanded(!isExpanded);
+    };
 
     // Generate context-aware suggestion queries based on conversation history
     const generateContextAwareSuggestions = async (history = []) => {
@@ -180,9 +186,17 @@ function App() {
     };
 
     return (
-        <div className="app-container">
+        <div className={`app-container ${isExpanded ? 'expanded' : ''}`}>
             <header className="header">
-                <img src="/images/share-icon.svg" alt="Share" className="share-icon" />
+                <div className="header-icons">
+                    <img src="/images/share-icon.svg" alt="Share" className="header-icon" />
+                    <img
+                        src={isExpanded ? "/images/minimize-icon.svg" : "/images/maximize-icon.svg"}
+                        alt={isExpanded ? "Minimize" : "Maximize"}
+                        className="header-icon"
+                        onClick={toggleExpand}
+                    />
+                </div>
             </header>
 
             <main className="main-content">
