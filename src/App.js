@@ -219,32 +219,51 @@ function App() {
                     <div className="chat-messages">
                         {messages.map((msg, index) => (
                             <div key={index} className={`message-container ${msg.sender}-container`}>
-                                <div className={`message ${msg.sender}-message`}>
-                                    <div className="message-content">{msg.text}</div>
-                                    {msg.sender === 'bot' && (
-                                        <div className="message-feedback">
-                                            <button
-                                                className="feedback-button thumbs-down"
-                                                onClick={() => handleFeedback(index, 'thumbs-down')}
-                                            >
-                                                <img src="/images/thumbs-down-icon.svg" alt="Thumbs down" />
-                                            </button>
-                                            <button
-                                                className="feedback-button thumbs-up"
-                                                onClick={() => handleFeedback(index, 'thumbs-up')}
-                                            >
-                                                <img src="/images/thumbs-up-icon.svg" alt="Thumbs up" />
-                                            </button>
+                                {msg.sender === 'bot' ? (
+                                    <div className="avatar-message-wrapper">
+                                        <div className="bot-avatar"></div>
+                                        <div className="message-wrapper">
+                                            <div className={`message ${msg.sender}-message`}>
+                                                <div className="message-content">{msg.text}</div>
+                                                <div className="message-feedback">
+                                                    <button
+                                                        className="feedback-button thumbs-down"
+                                                        onClick={() => handleFeedback(index, 'thumbs-down')}
+                                                    >
+                                                        <img src="/images/thumbs-down-icon.svg" alt="Thumbs down" />
+                                                    </button>
+                                                    <button
+                                                        className="feedback-button thumbs-up"
+                                                        onClick={() => handleFeedback(index, 'thumbs-up')}
+                                                    >
+                                                        <img src="/images/thumbs-up-icon.svg" alt="Thumbs up" />
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
-                                    )}
-                                </div>
+                                    </div>
+                                ) : (
+                                    <div className="avatar-message-wrapper">
+                                        <div className="message-wrapper">
+                                            <div className={`message ${msg.sender}-message`}>
+                                                <div className="message-content">{msg.text}</div>
+                                            </div>
+                                        </div>
+                                        <div className="user-avatar"></div>
+                                    </div>
+                                )}
                                 <div className="message-time">{msg.time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
                             </div>
                         ))}
                         {isLoading && (
                             <div className="message-container bot-container">
-                                <div className="message bot-message">
-                                    <div className="message-content thinking">Thinking...</div>
+                                <div className="avatar-message-wrapper">
+                                    <div className="bot-avatar"></div>
+                                    <div className="message-wrapper">
+                                        <div className="message bot-message">
+                                            <div className="message-content thinking">Thinking...</div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         )}
