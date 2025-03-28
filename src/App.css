@@ -201,14 +201,16 @@
 .message-feedback {
   position: absolute;
   right: 8px;
-  top: 95%;
+  bottom: -15px;
   display: flex;
   gap: 8px;
   opacity: 0;
   transition: opacity 0.2s ease-in-out;
   pointer-events: none;
+  z-index: 5;
 }
 
+.message-feedback.has-feedback,
 .bot-message:hover .message-feedback {
   opacity: 1;
   pointer-events: auto;
@@ -225,7 +227,7 @@
   height: 26px;
   padding: 4px 12px;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 .feedback-button:hover {
@@ -436,4 +438,27 @@
 
 .user-container .message-wrapper {
   align-items: flex-end;
+}
+
+.feedback-button.active {
+  background-color: #FFFFFF;
+  border: 1px solid #F1F2F4;
+}
+
+.feedback-emoji {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.43;
+}
+
+/* Always show feedback buttons when active */
+.message-feedback .active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Keep the feedback visible when any button is active */
+.bot-message .message-feedback:has(.active) {
+  opacity: 1;
+  pointer-events: auto;
 }

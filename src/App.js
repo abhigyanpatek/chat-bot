@@ -9,12 +9,19 @@ function App() {
     const [showChat, setShowChat] = useState(false);
     const [suggestedQueries, setSuggestedQueries] = useState([]);
     const [isExpanded, setIsExpanded] = useState(false);
+    const [feedbackState, setFeedbackState] = useState({});
     const messagesEndRef = useRef(null);
 
-    // Load conversation history from localStorage on initial render
+    // Load conversation history and feedback from localStorage on initial render
     useEffect(() => {
         try {
             const savedHistory = localStorage.getItem('chatHistory');
+            const savedFeedback = localStorage.getItem('feedbackState');
+
+            if (savedFeedback) {
+                setFeedbackState(JSON.parse(savedFeedback));
+            }
+
             if (savedHistory) {
                 const history = JSON.parse(savedHistory);
                 setConversationHistory(history);
@@ -180,16 +187,31 @@ function App() {
     const clearChat = () => {
         setMessages([]);
         setConversationHistory([]);
+        setFeedbackState({});
         setShowChat(false);
         localStorage.removeItem('chatHistory');
+        localStorage.removeItem('feedbackState');
         generateContextAwareSuggestions();
     };
 
     // Handle feedback when user clicks thumbs up/down
     const handleFeedback = (messageIndex, feedbackType) => {
         console.log(`Feedback for message ${messageIndex}: ${feedbackType}`);
+
+        // Toggle feedback if clicking the same button
+        const newFeedbackState = { ...feedbackState };
+        if (newFeedbackState[messageIndex] === feedbackType) {
+            delete newFeedbackState[messageIndex];
+        } else {
+            newFeedbackState[messageIndex] = feedbackType;
+        }
+
+        setFeedbackState(newFeedbackState);
+
+        // Save to localStorage
+        localStorage.setItem('feedbackState', JSON.stringify(newFeedbackState));
+
         // Here you would typically send the feedback to your backend
-        // For this implementation, we'll just log it to the console
     };
 
     return (
@@ -224,19 +246,25 @@ function App() {
                                         <div className="bot-avatar"></div>
                                         <div className="message-wrapper">
                                             <div className={`message ${msg.sender}-message`}>
-                                                <div className="message-content">{msg.text}</div>
-                                                <div className="message-feedback">
+                                                <div className={`message-content`}>{msg.text}</div>
+                                                <div className={`message-feedback ${feedbackState[index] ? 'has-feedback' : ''}`}>
                                                     <button
-                                                        className="feedback-button thumbs-down"
+                                                        className={`feedback-button thumbs-down ${feedbackState[index] === 'thumbs-down' ? 'active' : ''}`}
                                                         onClick={() => handleFeedback(index, 'thumbs-down')}
                                                     >
-                                                        <img src="/images/thumbs-down-icon.svg" alt="Thumbs down" />
+                                                        {feedbackState[index] === 'thumbs-down' ?
+                                                            <span className="feedback-emoji">👎</span> :
+                                                            <img src="/images/thumbs-down-icon.svg" alt="Thumbs down" />
+                                                        }
                                                     </button>
                                                     <button
-                                                        className="feedback-button thumbs-up"
+                                                        className={`feedback-button thumbs-up ${feedbackState[index] === 'thumbs-up' ? 'active' : ''}`}
                                                         onClick={() => handleFeedback(index, 'thumbs-up')}
                                                     >
-                                                        <img src="/images/thumbs-up-icon.svg" alt="Thumbs up" />
+                                                        {feedbackState[index] === 'thumbs-up' ?
+                                                            <span className="feedback-emoji">👍</span> :
+                                                            <img src="/images/thumbs-up-icon.svg" alt="Thumbs up" />
+                                                        }
                                                     </button>
                                                 </div>
                                             </div>
@@ -246,7 +274,7 @@ function App() {
                                     <div className="avatar-message-wrapper">
                                         <div className="message-wrapper">
                                             <div className={`message ${msg.sender}-message`}>
-                                                <div className="message-content">{msg.text}</div>
+                                                <div className={`message-content`}>{msg.text}</div>
                                             </div>
                                         </div>
                                         <div className="user-avatar"></div>
